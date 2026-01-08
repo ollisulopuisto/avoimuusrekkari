@@ -3,7 +3,7 @@ import { useQuery } from '@tanstack/react-query';
 import { api } from './api/client';
 import { Search, Globe, Building2, Calendar, FileText, Download, X, User, DollarSign, Target } from 'lucide-react';
 import { format } from 'date-fns';
-import { ActivityNotification, TargetInfo } from './api/types';
+import { ActivityNotification, TargetInfo, TargetRegistryItem } from './api/types';
 
 function App() {
   const [activeTab, setActiveTab] = useState<'activities' | 'organizations'>('activities');
@@ -21,7 +21,14 @@ function App() {
   const targetMap = useMemo(() => {
     const map = new Map<number, TargetInfo>();
     if (targets) {
-      targets.forEach(t => map.set(t.id, t));
+      console.log('Targets loaded:', targets.length);
+      targets.forEach(t => {
+        // Prefer FI, then SV, then EN
+        const info = t.fi || t.sv || t.en;
+        if (info) {
+          map.set(t.id, info);
+        }
+      });
     }
     return map;
   }, [targets]);
@@ -334,7 +341,7 @@ function DetailsModal({ activity, onClose, targetMap }: { activity: ActivityNoti
             <div>
               <div style={{ color: '#94a3b8', fontSize: '0.8rem' }}>Vaikuttamisen taloudellinen arvo</div>
               <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
-                <DollarSign size={16} /> {getAmountLabel(activity.activityAmount)}
+                {getAmountLabel(activity.activityAmount)}
               </div>
             </div>
           </div>
@@ -365,6 +372,9 @@ function DetailsModal({ activity, onClose, targetMap }: { activity: ActivityNoti
                         let name = 'Tuntematon';
                         let title = '';
                         let org = '';
+
+                        // Debug
+                        if (j === 0) console.log(`Processing target ${target.id}, contactedTargetId: ${target.contactedTargetId}, inMap: ${targetMap.has(Number(target.contactedTargetId))}`);
 
                         if (target.contactedTargetId && targetMap.has(target.contactedTargetId)) {
                           const info = targetMap.get(target.contactedTargetId)!;

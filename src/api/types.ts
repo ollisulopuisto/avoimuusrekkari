@@ -42,6 +42,7 @@ export interface ActivityTopic {
 
 export interface ActivityTarget {
   id: number;
+  contactedTargetId?: number;
   contactMethods: string[];
   contactedTarget?: {
     id: number;
@@ -49,6 +50,13 @@ export interface ActivityTarget {
     en?: TargetInfo;
     sv?: TargetInfo;
   };
+}
+
+export interface TargetRegistryItem {
+  id: number;
+  fi?: TargetInfo;
+  sv?: TargetInfo;
+  en?: TargetInfo;
 }
 
 export interface TargetInfo {

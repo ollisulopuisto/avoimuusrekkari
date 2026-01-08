@@ -1,4 +1,4 @@
-import { RegisterNotification, ActivityNotification, TargetInfo } from './types';
+import { RegisterNotification, ActivityNotification, TargetInfo, TargetRegistryItem } from './types';
 
 // In development (and potentially production if served correctly), we use the relative path
 // to let Vite (or Nginx) handle the proxying to avoid CORS.
@@ -40,7 +40,7 @@ export const api = {
         return fetchJson<ActivityNotification[]>(`/open-data-activity-notification/term/${termId}`);
     },
 
-    getTargets: async (): Promise<TargetInfo[]> => {
-        return fetchJson<TargetInfo[]>('/open-data-target/targets');
+    getTargets: async (): Promise<TargetRegistryItem[]> => {
+        return fetchJson<TargetRegistryItem[]>('/open-data-target/targets');
     }
 };
