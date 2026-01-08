@@ -1,7 +1,7 @@
 import { useState, useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { api } from './api/client';
-import { Search, Globe, Building2, Calendar, FileText, Download, X, User, Target } from 'lucide-react';
+import { Search, Globe, Building2, Calendar, FileText, Download } from 'lucide-react';
 import { format } from 'date-fns';
 import { ActivityNotification, TargetInfo } from './api/types';
 import { DetailsModal } from './components/DetailsModal';
