@@ -2,7 +2,7 @@
 
 A standalone Mac application to explore the Finnish Transparency Register (**Avoimuusrekisteri**).
 
-**Version**: 0.1.0
+**Version**: 0.2.0
 **Release**: Alpha
 
 ## Overview
