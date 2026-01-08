@@ -1,4 +1,4 @@
-import { RegisterNotification, ActivityNotification, TargetInfo, TargetRegistryItem } from './types';
+import { RegisterNotification, ActivityNotification, TargetRegistryItem } from './types';
 
 // In development (and potentially production if served correctly), we use the relative path
 // to let Vite (or Nginx) handle the proxying to avoid CORS.
