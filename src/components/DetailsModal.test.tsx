@@ -7,8 +7,10 @@ describe('DetailsModal', () => {
     const mockOnClose = vi.fn();
     const mockActivity: ActivityNotification = {
         id: 1,
+        diaryNumber: 'DN-2023-001',
         companyName: 'Test Company',
         companyId: '1234567-8',
+        termId: 1,
         reportingStartDate: '2023-01-01',
         reportingEndDate: '2023-12-31',
         activityAmount: 'minimal',
