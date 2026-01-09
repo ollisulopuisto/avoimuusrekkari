@@ -1,43 +1,64 @@
-# AvoimuusApp
+# AvoimuusExplorer
 
 A standalone Mac application to explore the Finnish Transparency Register (**Avoimuusrekisteri**).
 
-**Version**: 0.2.0
+**Version**: 0.3.0  
 **Release**: Alpha
 
 ## Overview
 
-This application provides a user-friendly interface to browse organizations and activities from the Transparency Register. It is built with React and heavily optimized for the macOS experience using Tauri.
+This application provides a user-friendly interface to browse organizations and lobbying activities from the Finnish Transparency Register. It is fully self-contained — no external server required.
 
 ## Features
 
 - **Browse Organizations**: View registered entities and their details.
-- **Activity Feed**: Real-time notifications of registry activities.
-- **Native Mac App**: Runs as a standalone application, not just a browser tab.
+- **Activity Feed**: Explore lobbying activity notifications with search and filtering.
+- **Native Mac App**: Runs as a standalone application with embedded API proxy.
+- **Offline-capable**: The app fetches data directly from the official API, no server setup needed.
 
-## for Developers
+## Download
+
+Download the latest `.dmg` from [Releases](https://github.com/ollisulopuisto/avoimuusrekkari/releases).
+
+> **Note**: The app is not notarized by Apple. To open it, Right-Click the app and select "Open" to bypass the security warning.
+
+## For Developers
 
 ### Prerequisites
 - Node.js (v20+)
 - Rust (for compiling the native shell)
 
 ### Running Locally
-To start the development environment:
 
 ```bash
+npm install
 npm run tauri dev
 ```
 
-This will launch the native application window with hot-reloading enabled.
+This launches the native application window with hot-reloading enabled. In dev mode, the Vite proxy handles API requests.
 
 ### Building for Release
-To build a standalone `.dmg` installer for distribution:
 
 ```bash
 npm run tauri build
 ```
 
-The output file will be located at:
-`src-tauri/target/release/bundle/dmg/avoimuus-app_0.1.0_x64.dmg`
+Output files:
+- `src-tauri/target/release/bundle/macos/avoimuus-app.app`
+- `src-tauri/target/release/bundle/dmg/avoimuus-app_0.3.0_x64.dmg`
 
-> **Note**: The app is not notarized by Apple. To open it on another machine, Right-Click the app and select "Open" to bypass the security warning.
+### Architecture
+
+The app uses **Tauri** with an embedded Rust backend that proxies requests to the official API (`public.api.avoimuusrekisteri.fi`). This allows distribution as a single binary without requiring users to set up any backend services.
+
+```
+┌─────────────────────────────────────────┐
+│           Tauri Application             │
+├─────────────────────────────────────────┤
+│  React Frontend (TypeScript)            │
+│    └── invoke() ──────────────────┐     │
+├───────────────────────────────────┼─────┤
+│  Rust Backend (reqwest)           │     │
+│    └── HTTP GET ──────────────────┼──►  │ public.api.avoimuusrekisteri.fi
+└─────────────────────────────────────────┘
+```
