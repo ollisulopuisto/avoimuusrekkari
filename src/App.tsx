@@ -1,7 +1,7 @@
 import { useState, useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { api } from './api/client';
-import { Search, Globe, Building2, Calendar, FileText, Download } from 'lucide-react';
+import { Search, Globe, Building2, Calendar, FileText, Download, Landmark } from 'lucide-react';
 import { format } from 'date-fns';
 import { ActivityNotification, TargetInfo } from './api/types';
 import { DetailsModal } from './components/DetailsModal';
@@ -22,7 +22,6 @@ function App() {
   const targetMap = useMemo(() => {
     const map = new Map<number, TargetInfo>();
     if (targets) {
-      console.log('Targets loaded:', targets.length);
       targets.forEach(t => {
         // Prefer FI, then SV, then EN
         const info = t.fi || t.sv || t.en;
@@ -38,25 +37,13 @@ function App() {
   const { data: activities, isLoading: activitiesLoading, error: activitiesError } = useQuery({
     queryKey: ['activities'],
     queryFn: async () => {
-      console.log('Starting activity fetch...');
-      try {
-        const data = await api.getActivityNotifications();
-        console.log('Activity fetch success, items:', data.length);
-        return data;
-      } catch (e) {
-        console.error('Activity fetch failed:', e);
-        throw e;
-      }
+      return api.getActivityNotifications();
     },
     staleTime: 1000 * 60 * 5, // 5 mins
   });
 
-  if (activitiesError) {
-    console.error('Query error:', activitiesError);
-  }
-
   // Fetch Organizations (we'll fetch register notifications which contain org details)
-  const { data: organizations, isLoading: orgsLoading } = useQuery({
+  const { data: organizations, isLoading: orgsLoading, error: orgsError } = useQuery({
     queryKey: ['organizations'],
     queryFn: api.getRegisterNotifications,
     staleTime: 1000 * 60 * 60, // 1 hour
@@ -97,8 +84,20 @@ function App() {
 
   // CSV Export
   const handleExport = () => {
+    if (activeTab === 'organizations' && filteredOrgs.length > 0) {
+      const csvEscape = (value: unknown) => `"${String(value ?? '').replace(/"/g, '""')}"`;
+      const rows = filteredOrgs.map(org => [org.companyName, org.companyId, org.mainIndustry, org.description].map(csvEscape).join(','));
+      const blob = new Blob([[['Organisaatio', 'Y-tunnus', 'Toimiala', 'Kuvaus'].map(csvEscape).join(','), ...rows].join('\n')], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = 'avoimuus-organisaatiot.csv';
+      link.click();
+      URL.revokeObjectURL(url);
+      return;
+    }
     if (activeTab === 'activities' && filteredActivities.length > 0) {
-      const headers = ['Company', 'Start Date', 'End Date', 'Topic Type', 'Topic Description', 'Targets'];
+      const headers = ['Yritys', 'Alkupäivä', 'Loppupäivä', 'Aiheet', 'Kohteet'];
       const rows = filteredActivities.map(a => {
         const topics = a.topics?.map(t => `${t.contactTopicOther || t.title}`).join('; ') || '';
         // Resolve target names if possible, otherwise empty
@@ -115,69 +114,80 @@ function App() {
         const startDate = a.term?.reportingStartDate || a.reportingStartDate || '';
         const endDate = a.term?.reportingEndDate || a.reportingEndDate || '';
 
-        return [
-          `"${a.companyName}"`,
-          `"${startDate}"`,
-          `"${endDate}"`,
-          `"${topics}"`,
-          `"${resolvedTargets}"`
-        ].join(',');
+        const csvEscape = (value: unknown) => `"${String(value ?? '').replace(/"/g, '""')}"`;
+        return [a.companyName, startDate, endDate, topics, resolvedTargets].map(csvEscape).join(',');
       });
 
-      const csvContent = [headers.join(','), ...rows].join('\n');
+      const csvEscape = (value: unknown) => `"${String(value ?? '').replace(/"/g, '""')}"`;
+      const csvContent = [[...headers].map(csvEscape).join(','), ...rows].join('\n');
       const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
       const url = URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.setAttribute('href', url);
       link.setAttribute('download', 'avoimuus-export.csv');
-      document.body.appendChild(link);
       link.click();
+      URL.revokeObjectURL(url);
     }
   };
 
   return (
     <div className="container">
-      <header>
-        <h1>AvoimuusExplorer</h1>
-        <div style={{ display: 'flex', gap: '10px' }}>
-          <button className="tab" onClick={handleExport} title="Export CSV">
-            <Download size={18} /> Export
-          </button>
-        </div>
+      <header className="topbar">
+        <a className="brand" href="#" aria-label="AvoimuusExplorer etusivu">
+          <span className="brand-mark"><Landmark size={20} /></span>
+          <span><strong>Avoimuus</strong><small>Explorer</small></span>
+        </a>
+        <button className="export-button" onClick={handleExport} title="Vie näkyvät tulokset CSV-tiedostoon" disabled={activeTab === 'activities' ? filteredActivities.length === 0 : filteredOrgs.length === 0}>
+          <Download size={16} /> Vie tulokset
+        </button>
       </header>
+
+      <section className="intro">
+        <div className="eyebrow">SUOMEN AVOIMUUSREKISTERI</div>
+        <h1>Seuraa vaikuttamista.<br /><span>Ymmärrä, ketkä keskustelevat.</span></h1>
+        <p>Hae yritysten toimintailmoituksia ja rekisteröityjä organisaatioita yhdestä paikasta.</p>
+      </section>
 
       <div className="search-container">
         <Search className="search-icon" size={20} />
         <input
           type="text"
           className="search-input"
-          placeholder="Etsi toimijoita, aiheita (esim. 'CER', 'huoltovarmuus')..."
+          placeholder="Hae yritystä, aihetta tai Y-tunnusta…"
+          aria-label="Hae yritystä, aihetta tai Y-tunnusta"
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
         />
       </div>
 
-      <div className="tabs">
+      <div className="list-toolbar">
+      <div className="tabs" role="tablist" aria-label="Tietosisältö">
         <button
           className={`tab ${activeTab === 'activities' ? 'active' : ''}`}
           onClick={() => setActiveTab('activities')}
         >
-          <Globe size={16} style={{ marginRight: 6 }} />
+          <Globe size={16} />
           Toimintailmoitukset
         </button>
         <button
           className={`tab ${activeTab === 'organizations' ? 'active' : ''}`}
           onClick={() => setActiveTab('organizations')}
         >
-          <Building2 size={16} style={{ marginRight: 6 }} />
+          <Building2 size={16} />
           Organisaatiot
         </button>
+      </div>
+      <span className="result-count">{activeTab === 'activities' ? filteredActivities.length : filteredOrgs.length} tulosta</span>
       </div>
 
       {activeTab === 'activities' && (
         <div className="content">
           {activitiesLoading ? (
-            <div className="loading">Ladataan toimintailmoituksia... (voi kestää hetken)</div>
+            <div className="state-card"><span className="spinner" /><strong>Ladataan toimintailmoituksia</strong><p>Tietojen haku voi kestää hetken.</p></div>
+          ) : activitiesError ? (
+            <div className="state-card"><strong>Tietojen lataus epäonnistui</strong><p>Tarkista verkkoyhteys ja yritä myöhemmin uudelleen.</p></div>
+          ) : filteredActivities.length === 0 ? (
+            <div className="state-card"><Search size={22} /><strong>Ei hakua vastaavia ilmoituksia</strong><p>Kokeile toista hakusanaa tai tyhjennä haku.</p></div>
           ) : (
             <div className="card-grid">
               {filteredActivities.slice(0, 100).map((activity) => (
@@ -189,8 +199,8 @@ function App() {
                 />
               ))}
               {filteredActivities.length > 100 && (
-                <div style={{ textAlign: 'center', gridColumn: '1/-1', padding: '20px', color: '#94a3b8' }}>
-                  Näytetään 100 / {filteredActivities.length} tulosta
+                <div className="more-results">
+                  Näytetään 100 ensimmäistä tulosta / {filteredActivities.length}
                 </div>
               )}
             </div>
@@ -201,20 +211,24 @@ function App() {
       {activeTab === 'organizations' && (
         <div className="content">
           {orgsLoading ? (
-            <div className="loading">Ladataan organisaatioita...</div>
+            <div className="state-card"><span className="spinner" /><strong>Ladataan organisaatioita</strong></div>
+          ) : orgsError ? (
+            <div className="state-card"><strong>Organisaatioiden lataus epäonnistui</strong><p>Tarkista verkkoyhteys ja yritä myöhemmin uudelleen.</p></div>
+          ) : filteredOrgs.length === 0 ? (
+            <div className="state-card"><Search size={22} /><strong>Ei hakua vastaavia organisaatioita</strong><p>Kokeile toista hakusanaa.</p></div>
           ) : (
             <div className="card-grid">
               {filteredOrgs.slice(0, 100).map((org) => (
-                <div className="card" key={org.id}>
+                <article className="card org-card" key={org.id}>
                   <div className="card-header">
                     <h3>{org.companyName}</h3>
                     <span className="tag">{org.companyId}</span>
                   </div>
                   <div className="card-body">
                     {org.mainIndustry && <p>Toimiala: {org.mainIndustry}</p>}
-                    <p style={{ fontSize: '0.85rem', marginTop: '10px' }}>{org.description?.substring(0, 150)}...</p>
+                    {org.description && <p className="org-description">{org.description.substring(0, 150)}{org.description.length > 150 ? '…' : ''}</p>}
                   </div>
-                </div>
+                </article>
               ))}
             </div>
           )}
@@ -252,36 +266,36 @@ function ActivityCard({ activity, onClick, targetMap }: { activity: ActivityNoti
   ));
 
   return (
-    <div className="card" onClick={onClick}>
+    <button className="card activity-card" onClick={onClick} aria-label={`Avaa ilmoituksen tiedot: ${activity.companyName}`}>
       <div className="card-header">
         <h3>{activity.companyName}</h3>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '5px', fontSize: '0.8rem', color: '#94a3b8' }}>
+        <div className="date-label">
           <Calendar size={14} /> {dateStr}
         </div>
       </div>
 
       <div className="card-body">
         {activity.topics?.slice(0, 2).map((topic, i) => (
-          <div key={i} style={{ marginBottom: '10px' }}>
+          <div key={i} className="topic-preview">
             {topic.contactTopicOther && (
-              <div style={{ fontWeight: 500, marginBottom: '4px', color: '#e2e8f0' }}>
+              <strong>
                 {topic.contactTopicOther}
-              </div>
+              </strong>
             )}
             {topic.title && (
-              <div style={{ fontStyle: 'italic', fontSize: '0.85rem' }}>
+              <em>
                 Aihe: {topic.title}
-              </div>
+              </em>
             )}
           </div>
         ))}
 
         {targets.length > 0 && (
           <div className="meta">
-            <div style={{ display: 'flex', gap: '5px' }}>
-              <FileText size={14} style={{ marginTop: '2px' }} />
+            <div style={{ display: 'flex', gap: '8px' }}>
+              <FileText size={14} className="meta-icon" />
               <div>
-                <span style={{ color: '#94a3b8' }}>Kontaktit:</span><br />
+                <span>Kontaktit: </span>
                 {targets.slice(0, 3).join(', ')}
                 {targets.length > 3 && ` +${targets.length - 3} muuta`}
               </div>
@@ -289,11 +303,11 @@ function ActivityCard({ activity, onClick, targetMap }: { activity: ActivityNoti
           </div>
         )}
 
-        <div style={{ marginTop: '15px', textAlign: 'center', fontSize: '0.8rem', color: '#38bdf8' }}>
-          Klikkaa nähdäksesi tiedot &rarr;
+        <div className="card-cta">
+          <span>Avaa ilmoituksen tiedot</span><span aria-hidden="true">→</span>
         </div>
       </div>
-    </div>
+    </button>
   );
 }
 

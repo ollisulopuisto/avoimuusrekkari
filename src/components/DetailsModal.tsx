@@ -51,7 +51,7 @@ export function DetailsModal({ activity, onClose, targetMap }: DetailsModalProps
                             Y-tunnus: {activity.companyId}
                         </div>
                     </div>
-                    <button className="close-button" onClick={onClose}>
+                    <button className="close-button" onClick={onClose} aria-label="Sulje tiedot">
                         <X size={24} />
                     </button>
                 </div>
@@ -98,9 +98,6 @@ export function DetailsModal({ activity, onClose, targetMap }: DetailsModalProps
                                                 let name = 'Tuntematon';
                                                 let title = '';
                                                 let org = '';
-
-                                                // Debug
-                                                if (j === 0) console.log(`Processing target ${target.id}, contactedTargetId: ${target.contactedTargetId}, inMap: ${targetMap.has(Number(target.contactedTargetId))}`);
 
                                                 if (target.contactedTargetId && targetMap.has(target.contactedTargetId)) {
                                                     const info = targetMap.get(target.contactedTargetId)!;

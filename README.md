@@ -13,6 +13,8 @@ This application provides a user-friendly interface to browse organizations and 
 
 - **Browse Organizations**: View registered entities and their details.
 - **Activity Feed**: Explore lobbying activity notifications with search and filtering.
+- **Search and export**: Search activities by company or topic, find organizations by name or business ID, and export the visible results as CSV.
+- **Accessible browsing**: Responsive result cards, keyboard-accessible activity details, and clear loading, error, and empty states.
 - **Native Mac App**: Runs as a standalone application with embedded API proxy.
 - **Offline-capable**: The app fetches data directly from the official API, no server setup needed.
 
