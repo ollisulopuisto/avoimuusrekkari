@@ -71,3 +71,26 @@ describe('DetailsModal', () => {
         expect(mockOnClose).toHaveBeenCalled();
     });
 });
+
+
+describe('DetailsModal keyboard boundary', () => {
+    it('names the dialog, moves focus inside, traps both Tab directions and restores focus', () => {
+        const opener = document.createElement('button');
+        document.body.append(opener);
+        opener.focus();
+        const { unmount } = render(<DetailsModal activity={{ id: 9, diaryNumber: '', companyName: 'Keyboard test', companyId: '', termId: 1, reportingStartDate: '2026-01-01', reportingEndDate: '2026-06-30', activityAmount: 'none', topics: [] }} onClose={() => {}} targetMap={new Map()} />);
+        const dialog = screen.getByRole('dialog', { name: 'Keyboard test' });
+        expect(dialog).toHaveAttribute('aria-modal', 'true');
+        const close = screen.getByRole('button', { name: 'Sulje tiedot' });
+        expect(close).toHaveFocus();
+        for (const shiftKey of [false, true]) {
+            const event = new KeyboardEvent('keydown', { key: 'Tab', shiftKey, bubbles: true, cancelable: true });
+            close.dispatchEvent(event);
+            expect(event.defaultPrevented).toBe(true);
+            expect(close).toHaveFocus();
+        }
+        unmount();
+        expect(opener).toHaveFocus();
+        opener.remove();
+    });
+});
