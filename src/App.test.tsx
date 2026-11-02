@@ -20,6 +20,7 @@ vi.mock('lucide-react', () => ({
     Calendar: () => <div data-testid="icon-calendar" />,
     FileText: () => <div data-testid="icon-file-text" />,
     Download: () => <div data-testid="icon-download" />,
+    Landmark: () => <div data-testid="icon-landmark" />,
     X: () => <div data-testid="icon-x" />,
     User: () => <div data-testid="icon-user" />,
     Target: () => <div data-testid="icon-target" />,
@@ -41,6 +42,6 @@ describe('App Component', () => {
             </QueryClientProvider>
         );
         // Check for the main title or a known element
-        expect(screen.getByText(/AvoimuusExplorer/i)).toBeInTheDocument();
+        expect(screen.getByRole('link', { name: 'AvoimuusExplorer etusivu' })).toBeInTheDocument();
     });
 });
