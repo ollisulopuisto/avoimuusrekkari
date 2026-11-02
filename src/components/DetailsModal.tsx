@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useId, useRef } from 'react';
 import { X, Calendar, FileText, Target, User } from 'lucide-react';
 import { format } from 'date-fns';
 import { ActivityNotification, TargetInfo } from '../api/types';
@@ -10,6 +10,15 @@ interface DetailsModalProps {
 }
 
 export function DetailsModal({ activity, onClose, targetMap }: DetailsModalProps) {
+    const dialogRef = useRef<HTMLDivElement>(null);
+    const titleId = useId();
+
+    useEffect(() => {
+        const opener = document.activeElement as HTMLElement | null;
+        dialogRef.current?.querySelector<HTMLButtonElement>('.close-button')?.focus();
+        return () => { if (opener?.isConnected) opener.focus(); };
+    }, []);
+
     // Fix 1: Dates
     const start = activity.term?.reportingStartDate || activity.reportingStartDate;
     const end = activity.term?.reportingEndDate || activity.reportingEndDate;
@@ -30,6 +39,17 @@ export function DetailsModal({ activity, onClose, targetMap }: DetailsModalProps
 
     useEffect(() => {
         const handleKeyDown = (event: KeyboardEvent) => {
+            if (event.key === 'Tab') {
+                const controls = Array.from(dialogRef.current?.querySelectorAll<HTMLElement>(
+                    'button:not(:disabled), a[href], input:not(:disabled), select:not(:disabled), textarea:not(:disabled), [tabindex="0"]'
+                ) ?? []);
+                const first = controls[0], last = controls[controls.length - 1];
+                if (first && (!dialogRef.current?.contains(document.activeElement) ||
+                    (event.shiftKey ? document.activeElement === first : document.activeElement === last))) {
+                    event.preventDefault();
+                    (event.shiftKey ? last : first).focus();
+                }
+            }
             if (event.key === 'Escape') {
                 onClose();
             }
@@ -43,10 +63,10 @@ export function DetailsModal({ activity, onClose, targetMap }: DetailsModalProps
 
     return (
         <div className="modal-overlay" onClick={onClose}>
-            <div className="modal-content" onClick={e => e.stopPropagation()}>
+            <div ref={dialogRef} role="dialog" aria-modal="true" aria-labelledby={titleId} className="modal-content" onClick={e => e.stopPropagation()}>
                 <div className="modal-header">
                     <div>
-                        <h2>{activity.companyName}</h2>
+                        <h2 id={titleId}>{activity.companyName}</h2>
                         <div style={{ color: '#94a3b8', fontSize: '0.9rem', marginTop: '5px' }}>
                             Y-tunnus: {activity.companyId}
                         </div>
