@@ -11,6 +11,15 @@ updates:
       all-npm:
         patterns:
           - "*"
+        exclude-patterns:
+          - "typescript"
+          - "typescript-eslint"
+          - "@typescript-eslint/*"
+      typescript-toolchain:
+        patterns:
+          - "typescript"
+          - "typescript-eslint"
+          - "@typescript-eslint/*"
   - package-ecosystem: "github-actions"
     directory: "/"
     schedule:
