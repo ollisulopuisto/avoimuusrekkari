@@ -275,8 +275,8 @@ function ActivityCard({ activity, onClick, targetMap }: { activity: ActivityNoti
       </div>
 
       <div className="card-body">
-        {activity.topics?.slice(0, 2).map((topic, i) => (
-          <div key={i} className="topic-preview">
+        {activity.topics?.slice(0, 2).map(topic => (
+          <div key={topic.id} className="topic-preview">
             {topic.contactTopicOther && (
               <strong>
                 {topic.contactTopicOther}

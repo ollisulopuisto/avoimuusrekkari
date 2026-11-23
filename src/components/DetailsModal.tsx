@@ -94,8 +94,8 @@ export function DetailsModal({ activity, onClose, targetMap }: DetailsModalProps
 
                     <div className="modal-section">
                         <h4><FileText size={18} /> Aiheet ja tavoitteet</h4>
-                        {activity.topics?.map((topic, i) => (
-                            <div key={i} className="topic-item">
+                        {activity.topics?.map(topic => (
+                            <div key={topic.id} className="topic-item">
                                 {topic.contactTopicOther && (
                                     <h5 style={{ margin: '0 0 10px 0', fontSize: '1.1rem', color: '#fff' }}>{topic.contactTopicOther}</h5>
                                 )}
@@ -113,11 +113,11 @@ export function DetailsModal({ activity, onClose, targetMap }: DetailsModalProps
                                             <Target size={14} /> Kohdehenkilöt ja -instituutiot
                                         </div>
                                         <div>
-                                            {topic.contactedTargets.map((target, j) => {
+                                            {topic.contactedTargets.map(target => {
                                                 // Fix 2: Resolve names
-                                                let name = 'Tuntematon';
-                                                let title = '';
-                                                let org = '';
+                                                let name: string;
+                                                let title: string;
+                                                let org: string;
 
                                                 if (target.contactedTargetId && targetMap.has(target.contactedTargetId)) {
                                                     const info = targetMap.get(target.contactedTargetId)!;
@@ -134,7 +134,7 @@ export function DetailsModal({ activity, onClose, targetMap }: DetailsModalProps
                                                 const fullLabel = [name, title, org].filter(Boolean).join(', ');
 
                                                 return (
-                                                    <span key={j} className="target-chip" title={target.contactMethods.join(', ')}>
+                                                    <span key={target.id} className="target-chip" title={target.contactMethods.join(', ')}>
                                                         <User size={12} style={{ marginRight: 4, verticalAlign: 'text-bottom' }} />
                                                         {fullLabel}
                                                     </span>

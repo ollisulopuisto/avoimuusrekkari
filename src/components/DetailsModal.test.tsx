@@ -94,3 +94,33 @@ describe('DetailsModal keyboard boundary', () => {
         opener.remove();
     });
 });
+
+
+describe('DetailsModal list identity', () => {
+    it('keeps each topic and target attached to its own DOM node when reordered', () => {
+        const activity: ActivityNotification = {
+            id: 10, diaryNumber: '', companyName: 'List identity', companyId: '',
+            termId: 1, reportingStartDate: '', reportingEndDate: '', activityAmount: 'none',
+            topics: [1, 2].map(id => ({
+                id, title: `Topic ${id}`, activityType: 'direct', contactTopicType: 'other',
+                contactedTargets: [1, 2].map(targetId => ({
+                    id: targetId, contactedTargetId: targetId, contactMethods: ['email'],
+                })),
+            })),
+        };
+        const targets = new Map<number, TargetInfo>([1, 2].map(id => [id, {
+            id, name: `Target ${id}`, organization: `Org ${id}`, title: `Role ${id}`,
+        }]));
+        const close = () => {};
+        const { rerender } = render(<DetailsModal activity={activity} onClose={close} targetMap={targets} />);
+        const firstTopic = screen.getByText('Topic 1').closest('.topic-item');
+        const firstTarget = firstTopic?.querySelector('.target-chip');
+        expect(firstTarget).toHaveTextContent('Target 1, Role 1, Org 1');
+        rerender(<DetailsModal activity={{ ...activity, topics: [...activity.topics!].reverse().map(
+            topic => ({ ...topic, contactedTargets: [...topic.contactedTargets!].reverse() })
+        ) }} onClose={close} targetMap={targets} />);
+        expect(screen.getByText('Topic 1').closest('.topic-item')).toBe(firstTopic);
+        expect(firstTopic?.querySelectorAll('.target-chip')[1]).toBe(firstTarget);
+        expect(firstTarget).toHaveAttribute('title', 'email');
+    });
+});
